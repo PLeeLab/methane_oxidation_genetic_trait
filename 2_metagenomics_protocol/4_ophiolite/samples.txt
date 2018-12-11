@@ -1,0 +1,3 @@
+sample	r1	r2
+Sample_01	00_RAW/SRR4101184_1.fastq	00_RAW/SRR4101184_2.fastq
+Sample_02	00_RAW/SRR4101185_1.fastq	00_RAW/SRR4101185_2.fastq

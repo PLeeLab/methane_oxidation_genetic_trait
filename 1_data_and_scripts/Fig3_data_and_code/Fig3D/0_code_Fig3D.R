@@ -1,0 +1,115 @@
+#install.packages('seqinr')
+#install.packages("reshape")
+#install.packages("robustbase")
+library('seqinr')
+library("reshape")
+library("robustbase")
+
+trna_matrix <- as.matrix(read.delim("0_tRNA_counts_CH4i.txt", header = TRUE, row.names = 1, check.names = FALSE))
+genes_metadata <- read.delim(file = "0_QC_data_CH4_IV.txt")
+ALL_query_CDSs <- read.fasta(file = "0_query_ALL_clean.fasta", seqtype = 'DNA')
+
+trna_counts_df <- melt(data = trna_matrix)
+trna_counts_df <- trna_counts_df[,c(2,1,3)]
+colnames(trna_counts_df) <- c("strain_name_plus_group", "tRNA_Codon", "tRNA_copies_avail")
+
+rscu_all <- sapply(ALL_query_CDSs, uco, index = "rscu")
+rscu_all <- t(rscu_all)
+rscu_all[is.na(rscu_all)] <- 0
+rscu_all <- rscu_all[,-c(15, 49,51,57,59)] # removing Met, Trp and Stop codons
+df_rscu_all <- as.data.frame(rscu_all)
+df_rscu_all$CDS <- rownames(df_rscu_all)
+df_rscu_integrated_all <- merge(x = genes_metadata, y = df_rscu_all, by="CDS")
+s2c_n_translate_fun <- function(x) {seqinr::translate(s2c(x))}
+colnames(df_rscu_integrated_all)[25:83] <- paste(aaa(sapply(X = colnames(df_rscu_integrated_all)[25:83], FUN = s2c_n_translate_fun)), "-", toupper(colnames(df_rscu_integrated_all)[25:83]), sep = "")
+rscu_df <- df_rscu_integrated_all[,c(2,3,5,6,8:10, 25:83)]
+rscu_melt_df <- melt(data = rscu_df, measure.vars = 8:66, variable_name = "AA_plus_codon")
+colnames(rscu_melt_df)[9] <- "RSCU"
+rscu_melt_df$codon <- gsub(x = rscu_melt_df$AA_plus_codon, pattern = ".*-", replacement = "")
+
+
+#------- importing whole-genome RSCU values -------#
+rscu_dataset_files <- list.files(path = "0_genomes_RSCU/")
+genome_names <- gsub(x = rscu_dataset_files, pattern = "_RSCU_RESULTS.txt", replacement = "")
+genome_names <- gsub(x = genome_names, pattern = "Isolated_", replacement = "")
+genome_names <- gsub(x = genome_names, pattern = "Metagenome_", replacement = "")
+for (i in 1:length(genome_names)) {
+  genome_rscu_1 <- read.delim(paste0("0_genomes_RSCU/", rscu_dataset_files[i]))
+  genome_rscu_1$CDS <- paste0("genome_", genome_names[i])
+  genome_rscu_1$sample <- ifelse(test = grepl(x = rscu_dataset_files[i], pattern = "Isolated_"), yes = "Isolated", no = "Metagenome")
+  genome_rscu_1$group <- "Ia"
+  genome_rscu_1$strain <- genome_names[i]
+  genome_rscu_1$strain_name_plus_group <- paste0("Ia_", genome_names[i])
+  genome_rscu_1$curated_gene <- "genome"
+  genome_rscu_1$gene_category <- "genome"
+  genome_rscu_1$gene_category_subunit <- "genome"
+  genome_rscu_1 <- genome_rscu_1[ , c(11:17, 1, 5)]
+  genome_rscu_1$codon <- toupper(genome_rscu_1$codon)
+  genome_rscu_1$AA_plus_codon <- paste(aaa(sapply(X = genome_rscu_1$codon, FUN = s2c_n_translate_fun)), "-", genome_rscu_1$codon, sep = "")
+  genome_rscu_1 <- genome_rscu_1[ , c(1:7, 10,9,8)]
+  colnames(genome_rscu_1)[9] <- "RSCU"
+  rscu_melt_df <- rbind(rscu_melt_df, genome_rscu_1)
+}
+#------- end -------#
+
+#------- importing ribosomal proteins RSCU values -------#rscu_HiExp
+for (i in 1:length(genome_names)) {
+  genome_rscu_1 <- read.delim(paste0("0_genomes_RSCU/", rscu_dataset_files[i]))
+  genome_rscu_1$CDS <- paste0("genome_", genome_names[i])
+  genome_rscu_1$sample <- ifelse(test = grepl(x = rscu_dataset_files[i], pattern = "Isolated_"), yes = "Isolated", no = "Metagenome")
+  genome_rscu_1$group <- "Ia"
+  genome_rscu_1$strain <- genome_names[i]
+  genome_rscu_1$strain_name_plus_group <- paste0("Ia_", genome_names[i])
+  genome_rscu_1$curated_gene <- "Ribo"
+  genome_rscu_1$gene_category <- "Ribo"
+  genome_rscu_1$gene_category_subunit <- "Ribo"
+  genome_rscu_1 <- genome_rscu_1[ , c(11:17, 1, 7)] # "7" is the column that contains "rscu_HiExp" which is th RSCU of Ribosomal protein coding genes
+  genome_rscu_1$codon <- toupper(genome_rscu_1$codon)
+  genome_rscu_1$AA_plus_codon <- paste(aaa(sapply(X = genome_rscu_1$codon, FUN = s2c_n_translate_fun)), "-", genome_rscu_1$codon, sep = "")
+  genome_rscu_1 <- genome_rscu_1[ , c(1:7, 10,9,8)]
+  colnames(genome_rscu_1)[9] <- "RSCU"
+  rscu_melt_df <- rbind(rscu_melt_df, genome_rscu_1)
+}
+#------- end -------#
+
+rscu_melt_df <- rscu_melt_df[(rscu_melt_df$AA_plus_codon != "Met-ATG" & rscu_melt_df$AA_plus_codon != "Trp-TGG" & rscu_melt_df$AA_plus_codon != "Stp-TGA" & rscu_melt_df$AA_plus_codon != "Stp-TAG" & rscu_melt_df$AA_plus_codon != "Stp-TAA"), ]
+rscu_melt_df$AA <- gsub(x = rscu_melt_df$AA_plus_codon, pattern = "-.*", replacement = "")
+rscu_melt_df_type_Ia <- rscu_melt_df[rscu_melt_df$group=="Ia",]
+
+casted_median_rscu_Ia <- cast(data = rscu_melt_df_type_Ia, formula = gene_category~AA_plus_codon, value = "RSCU", fun.aggregate = median)
+casted_mean_rscu_Ia <- cast(data = rscu_melt_df_type_Ia, formula = gene_category~AA_plus_codon, value = "RSCU", fun.aggregate = mean)
+
+wobble_rules <- read.delim(file = "0_wobble_pairing_rules.txt")
+revcomp_func <- function(x) {paste0(toupper(rev(comp(s2c(string = as.character(x))))), collapse = "")}
+wobble_rules$read_by_trna_Codon <- sapply(X = wobble_rules$read_by_trna_antiCodon, FUN = revcomp_func)
+s2c_n_translate_fun2 <- function(x) {paste(aaa(s2c_n_translate_fun(as.character(x))), "-", x, sep = "")}
+wobble_rules$AA_plus_codon <- sapply(X = wobble_rules$codon, FUN = s2c_n_translate_fun2)
+wobble_rules$exact_pairing <- ifelse(test = wobble_rules$codon == wobble_rules$read_by_trna_Codon, yes = "Yes", no = "No")
+wobble_compact_df <- wobble_rules[,2:6]
+
+rscu_wobble_df <- merge(x = rscu_melt_df, y = wobble_compact_df, by = "AA_plus_codon")
+sum(rscu_wobble_df$codon.x == rscu_wobble_df$codon.y) == length(rscu_wobble_df$codon.x)
+rscu_wobble_tRNA_df <- merge(x = rscu_wobble_df, y = trna_counts_df, by.x = c("strain_name_plus_group", "read_by_trna_Codon"), by.y = c("strain_name_plus_group", "tRNA_Codon"))
+rscu_wobble_tRNA_df$gene_plus_codon <- paste(rscu_wobble_tRNA_df$gene_category_subunit, rscu_wobble_tRNA_df$AA_plus_codon, sep = "_")
+
+# generating data frame for network of medians
+group = "Ia"
+trna_medians <- rowMedians(trna_matrix[ ,grep(colnames(trna_matrix), pattern = paste("^", group, "_", sep = ""))])
+trna_medians_df <- data.frame(tRNA_Codon = names(trna_medians), tRNA_avail = trna_medians)
+rownames(trna_medians_df) <- NULL
+
+medians_df_cast <- melt(data = casted_median_rscu_Ia, id.vars="gene_category")
+colnames(medians_df_cast) <- c("gene", "RSCU", "AA_plus_codon")
+rownames(medians_df_cast) <-  NULL
+medians_df_cast$codon <- gsub(x = medians_df_cast$AA_plus_codon, pattern = ".*-", replacement = "")
+medians_wobble_df <- merge(x = medians_df_cast, y = wobble_compact_df, by = "codon", all.x=TRUE)
+sum(medians_wobble_df$codon.x == medians_wobble_df$codon.y) == length(medians_wobble_df$codon.x)
+medians_wobble_tRNA_df <- merge(x = medians_wobble_df, y = trna_medians_df, by.x = c("read_by_trna_Codon"), by.y = c("tRNA_Codon"))
+DF_medians_Ia_from_cast <- medians_wobble_tRNA_df
+DF_medians_Ia_from_cast$gene <- gsub(x = DF_medians_Ia_from_cast$gene, pattern = "\\/amo", replacement = "")
+DF_medians_Ia_from_cast$gene_plus_codon <- paste(DF_medians_Ia_from_cast$gene, DF_medians_Ia_from_cast$AA_plus_codon.x, sep = "_")
+DF_medians_Ia_from_cast <- DF_medians_Ia_from_cast[DF_medians_Ia_from_cast$gene != "pxm" & DF_medians_Ia_from_cast$gene != "hao", ]
+DF_medians_Ia_from_cast <- DF_medians_Ia_from_cast[,c(6,1,9,10,4,5,3,2,8)]
+DF_medians_Ia_from_cast$AA <- gsub(x = DF_medians_Ia_from_cast$AA_plus_codon.x, pattern = "-.*", replacement = "")
+
+write.table(x = DF_medians_Ia_from_cast, file = "RSCU_complete_network.txt", sep = "\t", row.names = FALSE, quote = FALSE)
