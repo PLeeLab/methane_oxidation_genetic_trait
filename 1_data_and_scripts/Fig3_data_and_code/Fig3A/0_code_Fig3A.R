@@ -2,6 +2,7 @@
 #install.packages("RColorBrewer")
 library("gplots")
 library("RColorBrewer")
+#library("ggplot2")
 
 trna_matrix <- as.matrix(read.delim("1_tRNA_anticodon_CH4.txt", header = TRUE, row.names = 1))
 
@@ -39,7 +40,7 @@ heatmap.2(trna_matrix,
           margins =c(15,5),     # widens margins around plot
           col=my_palette,       # use on color palette defined earlier
           breaks=col_breaks,
-          colsep = c(0,23,29, 30, 41, 46, 49, 50, 68), #colsep = c(1:dim(mm)[2]),
+          colsep = c(0, 22, 28, 39, 44, 47), #colsep = c(1:dim(mm)[2]),
           rowsep = c(0, 4, 10, 12, 14, 16, 18, 20, 24, 26, 29, 35, 37, 38, 40, 44, 48, 51, 57, 58, 60, 64), #rowsep = c(1:dim(mm)[1]),
           sepcolor = "black",
           dendrogram= "none",
@@ -48,3 +49,24 @@ heatmap.2(trna_matrix,
           keysize=0.6,
           key.par = list(cex=0.6))
 dev.off()
+
+
+
+#library(reshape2)
+#library(ggplot2)
+#
+#df_heatmap <- melt(data = trna_matrix, id.vars = "anticodon")
+#names(df_heatmap) <- c("Anticodon", "Strain", "Count")
+#
+#ggplot(df_heatmap, aes(Strain, Anticodon )) +
+#  geom_tile(aes(fill = Count), color = "white") +
+#  scale_fill_gradient(low = "white", high = "steelblue") +
+#  ylab("tRNA Anticodon") +
+#  xlab("") +
+#  theme(legend.title = element_text(size = 10),
+#        legend.text = element_text(size = 12),
+#        plot.title = element_text(size=16),
+#        axis.title=element_text(size=14,face="bold"),
+#        axis.text.x = element_text(angle = 90, hjust = 1)) +
+#  labs(fill = "tRNA count")
+#ggsave(filename = "Fig3A.pdf", plot = p_Fig3A, width = 8, height = 10, device = "pdf", useDingbats=FALSE)

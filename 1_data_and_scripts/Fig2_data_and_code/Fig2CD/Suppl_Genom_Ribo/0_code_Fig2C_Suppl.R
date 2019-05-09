@@ -1,0 +1,102 @@
+# If all codons are used, the Nc value will be 61. 
+# If only one codon is used for each amino acid the Nc value will be 20. 
+# Low values therefore indicate a strong codon bias,
+# and high values indicate a low bias (and possibly a non-coding region).
+# http://www.bioinformatics.nl/cgi-bin/emboss/help/chips
+
+#install.packages('ggplot2')
+#install.packages("ggpubr")
+#install.packages("EnvStats")
+#install.packages("ggpubr")
+library('ggplot2')
+library("ggpubr")
+library("EnvStats")
+library("ggpubr")
+
+
+genes_metadata <- read.delim(file = "QC_data_CH4_IV.txt")
+Nc_all_df <- read.delim(file = "2_Nc_chips_CH4.tsv", header = FALSE)
+colnames(Nc_all_df) <- c("CDS", "Nc")
+dim(genes_metadata)[1] == dim(Nc_all_df)[1]
+integrated_Nc_df <- merge(x = genes_metadata, y = Nc_all_df, by="CDS", all.x = TRUE)
+length(Nc_all_df)==dim(integrated_Nc_df)[1]
+integrated_Nc_df$CDS_unambiguous <- paste(integrated_Nc_df$CDS, integrated_Nc_df$curated_gene, sep = "_")
+integrated_Nc_df <- integrated_Nc_df[!duplicated(integrated_Nc_df$CDS_unambiguous), ]
+dim(Nc_all_df)[1]==dim(integrated_Nc_df)[1]
+integrated_Nc_df$gene_category <- gsub(pattern = "pmo/amo", replacement = "pmo", x = integrated_Nc_df$gene_category)
+
+
+#integrated_Nc_df$gene_category <- factor(integrated_Nc_df$gene_category,levels = c("pmo", "mmo", "mxa", "xox", "hao", "pxm"))
+
+integrated_Nc_df_typeIa <- integrated_Nc_df[integrated_Nc_df$group=="Ia",]
+integrated_Nc_df_typeIa_reduced <- integrated_Nc_df[, c(1,8,23)] # Cols: CDS, genecategory,Nc
+
+# integrate ENC from genomes
+ENC_genome_list <- list.files(path = "1_ENC_Type_Ia_genomes/")
+genomes_ENC_DF <- data.frame(CDS=NA, gene_category=NA, Nc=NA)
+for (i in 1:length(ENC_genome_list)) {
+  genomes_ENC_DF <- rbind(genomes_ENC_DF,
+                          data.frame(CDS=ENC_genome_list[i], gene_category="genome", Nc=read.delim(file = paste0("1_ENC_Type_Ia_genomes/", ENC_genome_list[i]), sep = "=")[1,1]))  
+}
+genomes_ENC_DF <- genomes_ENC_DF[-1,]
+integrated_Nc_df_typeIa_reduced <- rbind(integrated_Nc_df_typeIa_reduced, genomes_ENC_DF)
+
+# integrate ENC from ribosomal protein genes
+ENC_ribosomal_list <- list.files(path = "1_ENC_Type_Ia_ribo//")
+ribosomal_ENC_DF <- data.frame(CDS=NA, gene_category=NA, Nc=NA)
+for (i in 1:length(ENC_ribosomal_list)) {
+  ribosomal_ENC_DF <- rbind(ribosomal_ENC_DF,
+                            data.frame(CDS=ENC_ribosomal_list[i], gene_category="ribosomal", Nc=read.delim(file = paste0("1_ENC_Type_Ia_ribo/", ENC_ribosomal_list[i]), sep = "=")[1,1]))  
+}
+ribosomal_ENC_DF <- ribosomal_ENC_DF[-1,]
+
+integrated_Nc_df_typeIa_reduced <- rbind(integrated_Nc_df_typeIa_reduced, ribosomal_ENC_DF)
+
+
+
+my_comparisons <- list( c("pmo", "mmo"), c("pmo", "mxa"), c("pmo", "xox"), c("pmo", "hao"), c("pmo", "pxm"),  c("pmo", "ribosomal"), c("pmo", "genome"))
+p_fig2c_supl <- ggplot(integrated_Nc_df_typeIa_reduced, aes(x=gene_category, y=Nc, fill=gene_category)) +
+#ggplot(integrated_Nc_df, aes(x=gene_category, y=Nc)) +
+  geom_boxplot(outlier.alpha = 0)+
+  geom_point(aes(fill=gene_category), shape=21, alpha = 0.5, position = position_jitter(width=0.2, height = 0)) +
+  #scale_fill_brewer(palette="Set1") +
+  scale_x_discrete(limits=c("pmo", "mmo","mxa", "xox", "hao", "pxm", "ribosomal", "genome")) +
+  scale_fill_manual(values = c("grey", "red", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "white", "yellow")) +
+  scale_colour_manual(values = c("grey", "red", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "white", "yellow")) +
+  #facet_wrap(facets = ~group)+
+  stat_compare_means(aes(label = ..p.signif..), comparisons = my_comparisons, method = "wilcox")+
+  theme_classic2()+
+  theme(strip.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(face = "italic"),
+        legend.text = element_text(face = "italic"),
+        legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1))+
+  xlab(label = "Gene")+
+  ylab(label = "ENC")+
+  NULL
+ggsave(filename = "Fig2C_Suppl.pdf", plot = p_fig2c_supl, device = "pdf", width = 5, height = 5, useDingbats=FALSE)
+
+
+my_comparisons_simpler <- list(c("pmo", "ribosomal"), c("pmo", "genome"))
+p_fig2c_supl_simpler <- ggplot(integrated_Nc_df_typeIa_reduced[integrated_Nc_df_typeIa_reduced$gene_category == "pmo" | integrated_Nc_df_typeIa_reduced$gene_category == "ribosomal" | integrated_Nc_df_typeIa_reduced$gene_category == "genome", ], aes(x=gene_category, y=Nc, fill=gene_category)) +
+  #ggplot(integrated_Nc_df, aes(x=gene_category, y=Nc)) +
+  geom_boxplot(outlier.alpha = 0, width=0.25)+
+  geom_point(aes(fill=gene_category), shape=21, alpha = 0.5, position = position_jitter(width=0.05, height = 0)) +
+  #scale_fill_brewer(palette="Set1") +
+  scale_x_discrete(limits=c("pmo", "ribosomal", "genome")) +
+  scale_fill_manual(values = c("grey", "#984EA3","white")) +
+  scale_colour_manual(values = c("grey", "#984EA3","white")) +
+  #facet_wrap(facets = ~group)+
+  stat_compare_means(aes(label = ..p.signif..), comparisons = my_comparisons_simpler, method = "wilcox")+
+  theme_classic2()+
+  theme(strip.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text.x = element_text(face = "italic"),
+        legend.text = element_text(face = "italic"),
+        legend.position="none", axis.text.x = element_text(angle = 45, hjust = 1))+
+  xlab(label = "Gene")+
+  ylab(label = "ENC")+
+  NULL
+ggsave(filename = "Fig2C_Suppl_simpler.pdf", plot = p_fig2c_supl_simpler, device = "pdf", width = 8, height = 5, useDingbats=FALSE)

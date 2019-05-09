@@ -24,17 +24,14 @@ rscu_all <- rscu_all[,-c(15, 49,51,57,59)] # removing Met, Trp and Stop codons
 
 rscu_Ia <- subset(x = rscu_all, subset = genes_metadata$group  =="Ia")
 rscu_Ib <- subset(x = rscu_all, subset = genes_metadata$group  =="Ib")
-rscu_Ic <- subset(x = rscu_all, subset = genes_metadata$group  =="Ic")
 rscu_IIa <- subset(x = rscu_all, subset = genes_metadata$group =="IIa")
 rscu_IIb <- subset(x = rscu_all, subset = genes_metadata$group =="IIb")
 rscu_III <- subset(x = rscu_all, subset = genes_metadata$group =="III")
-rscu_NC10 <- subset(x = rscu_all, subset = genes_metadata$group=="NC10")
-
 
 #----------- Figure 2A -----------#
 df_pca_rscu_Ia <- prcomp(rscu_Ia)
 df_out_rscu_Ia <- as.data.frame(df_pca_rscu_Ia$x)
-df_out_rscu_Ia$CDS <- rownames(df_out_rscu_Ia)
+df_out_rscu_Ia$CDS <- rownames(rscu_Ia)
 integrated_df_Ia <- merge(x = genes_metadata, y = df_out_rscu_Ia, by="CDS")
 dim(rscu_Ia)[1]==dim(integrated_df_Ia)[1]
 percentage_Ia <- round(df_pca_rscu_Ia$sdev / sum(df_pca_rscu_Ia$sdev) * 100, 2)
@@ -91,7 +88,7 @@ p_rscu_Ia_components <- ggplot(df_out_rscu_contrib_Ia, aes(x=PC1, y=PC2, label=f
 #----------- Figure 2AS2 -----------#
 df_pca_rscu_Ib <- prcomp(rscu_Ib)
 df_out_rscu_Ib <- as.data.frame(df_pca_rscu_Ib$x)
-df_out_rscu_Ib$CDS <- rownames(df_out_rscu_Ib)
+df_out_rscu_Ib$CDS <- rownames(rscu_Ib)
 integrated_df_Ib <- merge(x = genes_metadata, y = df_out_rscu_Ib, by="CDS")
 integrated_df_Ib$CDS_unambiguous <- paste(integrated_df_Ib$CDS, integrated_df_Ib$curated_gene, sep = "_")
 integrated_df_Ib <- integrated_df_Ib[!duplicated(integrated_df_Ib$CDS_unambiguous), ]
@@ -122,44 +119,10 @@ p_rscu_Ib_components <- ggplot(df_out_rscu_contrib_Ib, aes(x=PC1, y=PC2, label=f
   #ggtitle(label = "Type Ib")+
   NULL
 
-#----------- Figure 2AS3 -----------#
-df_pca_rscu_Ic <- prcomp(rscu_Ic)
-df_out_rscu_Ic <- as.data.frame(df_pca_rscu_Ic$x)
-df_out_rscu_Ic$CDS <- rownames(df_out_rscu_Ic)
-integrated_df_Ic <- merge(x = genes_metadata, y = df_out_rscu_Ic, by="CDS")
-dim(rscu_Ic)[1]==dim(integrated_df_Ic)[1]
-percentage_Ic <- round(df_pca_rscu_Ic$sdev / sum(df_pca_rscu_Ic$sdev) * 100, 2)
-percentage_Ic <- paste( colnames(df_out_rscu_Ic), "(", paste( as.character(percentage_Ic), "%", ")", sep="") )
-p_rscu_Ic <- ggplot(integrated_df_Ic, aes(x=PC1, y=PC2)) + 
-  scale_fill_brewer(palette="Set1") +
-  scale_colour_brewer(palette="Set1") +
-  geom_point(aes(fill=gene_category), alpha=0.8, size=3, color="white", shape=21)+ #geom_point(aes(fill=gene_category, shape=sample), alpha=0.8, size=2, color="white")+ 
-  #scale_shape_manual(values=c(21, 24))+
-  xlab(percentage_Ic[1]) +
-  ylab(percentage_Ic[2]) +
-  theme(axis.text.x = element_text(colour = "black"),
-        axis.text.y = element_text(colour = "black"),
-        panel.border = element_rect(fill = NA),
-        axis.ticks = element_blank())+
-  ggtitle(label = "", subtitle = "Type Ic") +
-  guides(fill = guide_legend(title="Gene", override.aes=list(shape=21)), shape = guide_legend(title="", override.aes=list(color="black")))
-df_out_rscu_contrib_Ic <- as.data.frame(df_pca_rscu_Ic$rotation)
-df_out_rscu_contrib_Ic$feature <- row.names(df_out_rscu_contrib_Ic)
-p_rscu_Ic_components <- ggplot(df_out_rscu_contrib_Ic, aes(x=PC1, y=PC2, label=feature)) +
-  geom_point(colour="transparent") +
-  geom_text(size=3)+
-  theme(axis.text.x = element_text(colour = "black"),
-        axis.text.y = element_text(colour = "black"))+
-  theme_classic2()+
-  #ggtitle(label = "Type Ic")+
-  NULL
-
-
-
 #----------- Figure 2AS4 -----------#
 df_pca_rscu_IIa <- prcomp(rscu_IIa)
 df_out_rscu_IIa <- as.data.frame(df_pca_rscu_IIa$x)
-df_out_rscu_IIa$CDS <- rownames(df_out_rscu_IIa)
+df_out_rscu_IIa$CDS <- rownames(rscu_IIa)
 integrated_df_IIa <- merge(x = genes_metadata, y = df_out_rscu_IIa, by="CDS")
 dim(rscu_IIa)[1]==dim(integrated_df_IIa)[1]
 percentage_IIa <- round(df_pca_rscu_IIa$sdev / sum(df_pca_rscu_IIa$sdev) * 100, 2)
@@ -192,7 +155,7 @@ p_rscu_IIa_components <- ggplot(df_out_rscu_contrib_IIa, aes(x=PC1, y=PC2, label
 #----------- Figure 2AS5 -----------#
 df_pca_rscu_IIb <- prcomp(rscu_IIb)
 df_out_rscu_IIb <- as.data.frame(df_pca_rscu_IIb$x)
-df_out_rscu_IIb$CDS <- rownames(df_out_rscu_IIb)
+df_out_rscu_IIb$CDS <- rownames(rscu_IIb)
 integrated_df_IIb <- merge(x = genes_metadata, y = df_out_rscu_IIb, by="CDS")
 dim(rscu_IIb)[1]==dim(integrated_df_IIb)[1]
 percentage_IIb <- round(df_pca_rscu_IIb$sdev / sum(df_pca_rscu_IIb$sdev) * 100, 2)
@@ -224,7 +187,7 @@ p_rscu_IIb_components <- ggplot(df_out_rscu_contrib_IIb, aes(x=PC1, y=PC2, label
 #----------- Figure 2AS6 -----------#
 df_pca_rscu_III <- prcomp(rscu_III)
 df_out_rscu_III <- as.data.frame(df_pca_rscu_III$x)
-df_out_rscu_III$CDS <- rownames(df_out_rscu_III)
+df_out_rscu_III$CDS <- rownames(rscu_III)
 integrated_df_III <- merge(x = genes_metadata, y = df_out_rscu_III, by="CDS")
 dim(rscu_III)[1]==dim(integrated_df_III)[1]
 percentage_III <- round(df_pca_rscu_III$sdev / sum(df_pca_rscu_III$sdev) * 100, 2)
@@ -253,59 +216,23 @@ p_rscu_III_components <- ggplot(df_out_rscu_contrib_III, aes(x=PC1, y=PC2, label
   #ggtitle(label = "Type III")+
   NULL
 
-#----------- Figure 2AS7 -----------#
-df_pca_rscu_NC10 <- prcomp(rscu_NC10)
-df_out_rscu_NC10 <- as.data.frame(df_pca_rscu_NC10$x)
-df_out_rscu_NC10$CDS <- rownames(df_out_rscu_NC10)
-integrated_df_NC10 <- merge(x = genes_metadata, y = df_out_rscu_NC10, by="CDS")
-dim(rscu_NC10)[1]==dim(integrated_df_NC10)[1]
-percentage_NC10 <- round(df_pca_rscu_NC10$sdev / sum(df_pca_rscu_NC10$sdev) * 100, 2)
-percentage_NC10 <- paste( colnames(df_out_rscu_NC10), "(", paste( as.character(percentage_NC10), "%", ")", sep="") )
-p_rscu_NC10 <- ggplot(integrated_df_NC10, aes(x=PC1, y=PC2)) + 
-  scale_fill_brewer(palette="Set1") +
-  scale_colour_brewer(palette="Set1") +
-  geom_point(aes(fill=gene_category), alpha=0.8, size=3, color="white", shape=21)+ #geom_point(aes(fill=gene_category, shape=sample), alpha=0.8, size=2, color="white")+ 
-  #scale_shape_manual(values=c(21, 24))+
-  xlab(percentage_NC10[1]) +
-  ylab(percentage_NC10[2]) +
-  theme(axis.text.x = element_text(colour = "black"),
-        axis.text.y = element_text(colour = "black"),
-        panel.border = element_rect(fill = NA),
-        axis.ticks = element_blank())+
-  ggtitle(label = "", subtitle = "NC10") +
-  guides(fill = guide_legend(title="Gene", override.aes=list(shape=21)), shape = guide_legend(title="", override.aes=list(color="black")))
-df_out_rscu_contrib_NC10 <- as.data.frame(df_pca_rscu_NC10$rotation)
-df_out_rscu_contrib_NC10$feature <- row.names(df_out_rscu_contrib_NC10)
-p_rscu_NC10_components <- ggplot(df_out_rscu_contrib_NC10, aes(x=PC1, y=PC2, label=feature)) +
-  geom_point(colour="transparent") +
-  geom_text(size=3)+
-  theme(axis.text.x = element_text(colour = "black"),
-        axis.text.y = element_text(colour = "black"))+
-  theme_classic2()+
-  #ggtitle(label = "Type NC10")+
-  NULL
-
 ggsave(filename = "Fig2AS1.pdf",
        plot = ggarrange(p_rscu_Ia, p_rscu_Ia_components,
                         p_rscu_Ib, p_rscu_Ib_components,
-                        p_rscu_Ic, p_rscu_Ic_components,
                         p_rscu_IIa, p_rscu_IIa_components,
                         p_rscu_IIb, p_rscu_IIb_components,
                         p_rscu_III, p_rscu_III_components,
-                        p_rscu_NC10, p_rscu_NC10_components,
                         ncol = 4,
-                        nrow = 4,
+                        nrow = 3,
                         labels = c("a", "",
                                    "b", "",
                                    "c", "",
                                    "d", "",
-                                   "e", "",
-                                   "f", "",
-                                   "g", ""),
+                                   "e", ""),
                         legend = "bottom",
                         common.legend = TRUE),
        device = "pdf",
-       width = 13,
-       height = 15,
+       width = 12,
+       height = 10,
        useDingbats=FALSE)
 
