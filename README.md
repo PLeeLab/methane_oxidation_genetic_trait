@@ -1,7 +1,7 @@
 https://msystems.asm.org/content/4/4/e00342-19
 
 
-# Genomic Evidence for Simultaneous Optimization of Transcription and Translation through Codon Variants in the pmoCAB Operon of Type Ia Methanotrophs
+# Genomic Evidence for Simultaneous Optimization of Transcription and Translation through Codon Variants in the _pmoCAB_ Operon of Type Ia Methanotrophs
 
 DOI: 10.1128/mSystems.00342-19
 
@@ -15,7 +15,7 @@ _Patrick K. H. Lee_<br />
 2. [Protocol for the metagenomics analysis pipeline](2_metagenomics_protocol/)
 3. [Compilation of isolate genomes and MAGs used in this study](3_compilation_of_genomes_and_MAGs/)
 
-### Contact
+## Contact
 [Lee Research Group](http://www6.cityu.edu.hk/see/personal/Patrick_Lee/research.html)<br />
 _Environmental Microbiology and Biotechnology Laboratory<br />
 School of Energy and Environment<br />
