@@ -1,4 +1,9 @@
-# Adaptive trait in the methane oxidation metabolic module
+https://msystems.asm.org/content/4/4/e00342-19
+
+
+# Genomic Evidence for Simultaneous Optimization of Transcription and Translation through Codon Variants in the pmoCAB Operon of Type Ia Methanotrophs
+
+DOI: 10.1128/mSystems.00342-19
 
 _Juan C. Villada_<br />
 _Maria F. Duran_<br />
